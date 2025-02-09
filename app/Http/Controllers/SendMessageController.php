@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\Message;
+use App\Events\Message as MessageEvent;
+use App\Models\Message;
+use App\Models\ChatRoom;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 
@@ -21,7 +23,15 @@ class SendMessageController extends Controller
             'message' => ['required', 'string', 'max:140'],
         ]);
 
-        Message::broadcast(
+        $chatRoom = ChatRoom::where('room_code', $request->room)->firstOrFail();
+
+        $message = Message::create([
+            'chat_room_id' => $chatRoom->id,
+            'user_id' => $request->user()->id,
+            'message' => $request->message,
+        ]);
+
+        MessageEvent::broadcast(
             $request->user(),
             $request->room,
             $request->message,

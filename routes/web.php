@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatRoomController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SendMessageController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/auth.php';
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/{room?}', ChatRoomController::class)->name('dashboard');
+    Route::get('/', DashboardController::class)->name('dashboard');
+
+    Route::get('/chat/{roomCode}', [ChatRoomController::class, 'index'])->name('chatroom');
+    Route::post('/chat/create', [ChatRoomController::class, 'createRoom'])->name('create.room');
+
     Route::post('/message', SendMessageController::class)->name('send.message');
 });

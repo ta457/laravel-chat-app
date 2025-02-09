@@ -4,7 +4,7 @@
     <BreezeAuthenticatedLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Chat room: {{ room }}
+                Chat room: {{ name }}
             </h2>
             <div>
                 Shareable link: <code class="bg-yellow-300 rounded-lg px-2 py-0.5 select-all">{{ link }}</code>
@@ -26,21 +26,24 @@
                 </div>
                 <div class="flex flex-col space-y-3 flex-1 h-96 overflow-y-auto">
                     <div
-                        class="bg-white shadow-sm sm:rounded-lg p-3 w-full"
                         v-for="(line, i) in lines"
                         :key="i"
+                        class="bg-white shadow-sm sm:rounded-lg p-3 w-full"
                     >
-                        <div :class="{
-                            'text-red-500': line.type === 'error',
-                            'italic text-gray-600': line.type === 'system',
-                        }">
+                        <div 
+                            :class="{
+                                'text-red-500': line.type === 'error',
+                                'italic text-gray-600': line.type === 'system',
+                            }"
+                        >
                             <div
                                 v-if="line.type === 'message'"
                                 class="font-bold"
                             >
+                                <UserAvatar />
                                 {{ line.user.name }}
                             </div>
-                            <div>
+                            <div class="ml-11">
                                 {{ line.message }}
                             </div>
                         </div>
@@ -63,6 +66,7 @@
 <script>
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue'
 import BreezeInput from '@/Components/Input.vue'
+import UserAvatar from '@/Components/UserAvatar.vue'
 import { Head } from '@inertiajs/inertia-vue3';
 
 export default {
@@ -70,16 +74,23 @@ export default {
         BreezeAuthenticatedLayout,
         BreezeInput,
         Head,
+        UserAvatar,
     },
 
     props: [
+        'name',
         'room',
         'link',
+        'messages',
     ],
 
     data() {
         return {
-            lines: [],
+            lines: this.messages.map(message => ({
+                message: message.message,
+                user: message.user,
+                type: 'message',
+            })),
             users: [],
             message: '',
         };

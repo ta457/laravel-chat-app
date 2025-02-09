@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChatRoom;
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
@@ -16,16 +18,39 @@ class ChatRoomController extends Controller
      * @param  string|null  $room
      * @return \Illuminate\Http\Response
      */
-    public function __invoke(Request $request, $room = null)
+    public function index($roomCode = null)
     {
-        // If no room is assigned, generate a random room name.
-        if (! $room) {
-            return Redirect::route('dashboard', ['room' => Str::random(10)]);
+        $chatRoom = ChatRoom::where('room_code', $roomCode)->firstOrFail();
+
+        if (!$chatRoom) {
+            return Redirect::route('dashboard');
         }
 
+        $chatRoom->users()->syncWithoutDetaching(auth()->id());
+
+        $messages = Message::where('chat_room_id', $chatRoom->id)
+            ->with('user')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
         return Inertia::render('ChatRoom', [
-            'room' => $room,
-            'link' => route('dashboard', ['room' => $room]),
+            'name' => $chatRoom->name,
+            'room' => $chatRoom->room_code,
+            'link' => route('chatroom', ['roomCode' => $chatRoom->room_code]),
+            'messages' => $messages,
         ]);
+    }
+
+    public function createRoom(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:chat_rooms,name',
+        ]);
+
+        $chatRoom = ChatRoom::create([
+            'name' => $request->name,
+        ]);
+
+        return Redirect::route('chatroom', ['roomCode' => $chatRoom->room_code]);
     }
 }
